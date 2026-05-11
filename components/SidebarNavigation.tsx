@@ -1,25 +1,13 @@
 "use client";
 
 import {
-  BarChartSquare02,
-  File05,
-  FileSearch03,
   LogOut01,
-  RefreshCw04,
-  User01,
 } from "@untitledui/icons";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
-const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: BarChartSquare02 },
-  { label: "Open Spreadsheet", href: "/spreadsheet", icon: FileSearch03 },
-  { label: "My Entries", href: "/entries", icon: File05 },
-  { label: "Pending Sync", href: "/sync", icon: RefreshCw04 },
-  { label: "Profile", href: "/profile", icon: User01 },
-];
+import { sidebarNavItems } from "@/lib/prototype-navigation";
 
 export function SidebarNavigation() {
   const pathname = usePathname();
@@ -43,7 +31,7 @@ export function SidebarNavigation() {
       </div>
 
       <nav className="space-y-2">
-        {navItems.map((item) => {
+        {sidebarNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
 

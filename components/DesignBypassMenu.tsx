@@ -5,28 +5,7 @@ import { Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-
-const screenLinks = [
-  { label: "Screen 01 - Login", href: "/login" },
-  { label: "Screen 02 - Dashboard", href: "/dashboard" },
-  { label: "Screen 03 - Spreadsheet", href: "/spreadsheet" },
-  { label: "Screen 04 - Entries", href: "/entries" },
-  { label: "Screen 05 - Pending Sync", href: "/sync" },
-  { label: "Screen 06 - Profile", href: "/profile" },
-  { label: "Screen 07 - Encoder Login", href: "/login/encoder" },
-  { label: "Screen 08 - Admin Login", href: "/login/admin" },
-  { label: "Screen 09 - Super Admin Login", href: "/login/super-admin" },
-  { label: "Screen 10 - Encoder Dashboard", href: "/dashboard/encoder" },
-  { label: "Screen 11 - Admin Dashboard", href: "/dashboard/admin" },
-  { label: "Screen 12 - Super Admin Dashboard", href: "/dashboard/super-admin" },
-  { label: "Screen 13 - Encoder Loading", href: "/login/encoder?state=loading" },
-  { label: "Screen 14 - Encoder Error", href: "/login/encoder?state=error" },
-  { label: "Screen 15 - Encoder Success", href: "/login/encoder?state=success" },
-  { label: "Screen 16 - Admin Loading", href: "/login/admin?state=loading" },
-  { label: "Screen 17 - Admin Error", href: "/login/admin?state=error" },
-  { label: "Screen 18 - Super Admin Loading", href: "/login/super-admin?state=loading" },
-  { label: "Screen 19 - Super Admin Error", href: "/login/super-admin?state=error" },
-];
+import { bypassScreenLinks } from "@/lib/prototype-navigation";
 
 function MenuContent() {
   const [isOpen, setIsOpen] = useState(false);
@@ -76,7 +55,7 @@ function MenuContent() {
               Screen Navigator (19)
             </p>
             <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
-              {screenLinks.map((item) => (
+              {bypassScreenLinks.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import { AppShell } from "@/components/AppShell";
 import DesignBypassMenu from "@/components/DesignBypassMenu";
-import { Inter } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Census Encoding System",
@@ -20,10 +14,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <AppShell>{children}</AppShell>
-        <DesignBypassMenu />
+        {process.env.NODE_ENV === "development" ? <DesignBypassMenu /> : null}
       </body>
     </html>
   );
