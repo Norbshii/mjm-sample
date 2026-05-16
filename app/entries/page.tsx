@@ -95,10 +95,11 @@ function EntriesFormEnginePage() {
   const activeSectionDef = sectionDefs[activeSectionIndex];
 
   if (mode === "view") {
+    const recordId = searchParams.get("id") || "HH-2026-0012";
     return (
       <RecordDetailView
         data={{
-          id: "HH-2026-0012",
+          id: recordId,
           status: "Completed",
           sectionA,
           sectionB,

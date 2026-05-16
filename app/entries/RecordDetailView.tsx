@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit3, CheckCircle2, Wifi } from "lucide-react";
+import { Edit3, CheckCircle2, Wifi, Heart, ShieldAlert } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   HouseholdMember,
@@ -15,6 +15,12 @@ import {
   publicFacilityOptions,
   privateFacilityOptions,
   gRows,
+  employmentNatureOptions,
+  classWorkerOptions,
+  financeOptions,
+  disabilityOptions,
+  functionalRows,
+  difficultyColumns,
 } from "@/lib/census-constants";
 
 type RecordDetailViewProps = {
@@ -126,7 +132,45 @@ export function RecordDetailView({ data }: RecordDetailViewProps) {
         </div>
       </section>
 
-      {/* Card 2: Housing & WASH */}
+      {/* Card 2: Health & Difficulties */}
+      <section className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center gap-2">
+          <Heart size={18} className="text-red-500" />
+          <h2 className="text-base font-semibold text-gray-900">Health & Difficulties (Section B)</h2>
+        </div>
+        <div className="px-6 py-6">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-2">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Functional Difficulties</h3>
+              <dl className="space-y-3">
+                {functionalRows.map(row => (
+                  <div key={row.id} className="flex justify-between items-start gap-4 border-b border-gray-50 pb-2">
+                    <dt className="text-sm text-gray-500">{row.question}</dt>
+                    <dd className="text-sm font-medium text-gray-900 shrink-0">
+                      {getLabel(data.sectionB.matrix[row.id], difficultyColumns)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Disabilities Declared</h3>
+              <div className="flex flex-wrap gap-2">
+                {data.sectionB.b12.map(val => (
+                  <span key={val} className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700/10">
+                    {getLabel(val, disabilityOptions)}
+                  </span>
+                ))}
+                {data.sectionB.b12.length === 0 && (
+                  <p className="text-sm text-gray-400 italic">No disabilities reported</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Card 3: Housing & WASH */}
       <section className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="border-b border-gray-200 px-6 py-4">
           <h2 className="text-base font-semibold text-gray-900">Housing & WASH (Sections N & O)</h2>
@@ -194,17 +238,17 @@ export function RecordDetailView({ data }: RecordDetailViewProps) {
             <div>
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Food Security Summary</h3>
               <dl className="space-y-3">
-                <div className="flex justify-between items-start gap-4 border-b border-gray-50 pb-2">
-                  <dt className="text-sm text-gray-500">Experienced Hunger</dt>
-                  <dd className="text-sm font-medium text-gray-900 shrink-0">
-                    {data.sectionG["G03"] === "1" ? "Yes" : "No"}
-                  </dd>
-                </div>
                 {gRows.map(row => (
                   <div key={row.id} className="flex justify-between items-start gap-4 border-b border-gray-50 pb-2">
                     <dt className="text-sm text-gray-500">{row.question}</dt>
                     <dd className="text-sm font-medium text-gray-900 shrink-0">
-                      {data.sectionG[row.id] === "1" ? "Yes" : data.sectionG[row.id] === "2" ? "No" : "Not Answered"}
+                      {data.sectionG[row.id] === "1" ? (
+                        <span className="text-red-600 font-semibold">Yes</span>
+                      ) : data.sectionG[row.id] === "2" ? (
+                        <span className="text-green-600">No</span>
+                      ) : (
+                        <span className="text-gray-400">Not Answered</span>
+                      )}
                     </dd>
                   </div>
                 ))}
@@ -214,9 +258,10 @@ export function RecordDetailView({ data }: RecordDetailViewProps) {
         </div>
       </section>
 
-      {/* Card 4: Employment & Finance */}
+      {/* Card 5: Employment & Finance */}
       <section className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-gray-200 px-6 py-4">
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center gap-2">
+          <ShieldAlert size={18} className="text-blue-500" />
           <h2 className="text-base font-semibold text-gray-900">Employment & Finance (Sections E & I)</h2>
         </div>
         <div className="px-6 py-6">
@@ -224,23 +269,13 @@ export function RecordDetailView({ data }: RecordDetailViewProps) {
             <div>
               <dt className="text-sm text-gray-500">Head Employment Nature</dt>
               <dd className="mt-1 text-sm font-medium text-gray-900">
-                {getLabel(data.sectionE.e07, [
-                  { label: "Permanent", value: "1" },
-                  { label: "Short-term/Seasonal/Casual", value: "2" },
-                  { label: "Day-to-Day/Week-to-Week", value: "3" },
-                ])}
+                {getLabel(data.sectionE.e07, employmentNatureOptions)}
               </dd>
             </div>
             <div>
               <dt className="text-sm text-gray-500">Class of Worker</dt>
               <dd className="mt-1 text-sm font-medium text-gray-900">
-                {getLabel(data.sectionE.e08, [
-                  { label: "Private Household", value: "0" },
-                  { label: "Private Establishment", value: "1" },
-                  { label: "Government/GOCC", value: "2" },
-                  { label: "Self-Employed", value: "3" },
-                  { label: "Employer", value: "4" },
-                ])}
+                {getLabel(data.sectionE.e08, classWorkerOptions)}
               </dd>
             </div>
             <div className="sm:col-span-2">
@@ -248,10 +283,10 @@ export function RecordDetailView({ data }: RecordDetailViewProps) {
               <dd className="flex flex-wrap gap-2">
                 {data.sectionI.map((val) => (
                   <span key={val} className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                    {val}
+                    {getLabel(val, financeOptions)}
                   </span>
                 ))}
-                {data.sectionI.length === 0 && <span className="text-sm text-gray-400">None declared</span>}
+                {data.sectionI.length === 0 && <span className="text-sm text-gray-400 italic">None declared</span>}
               </dd>
             </div>
           </dl>
