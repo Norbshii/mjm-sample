@@ -76,7 +76,12 @@ const sectionBSchema = z.object({
 
 type SectionBFormValues = z.infer<typeof sectionBSchema>;
 
-export function SectionB() {
+type SectionBProps = {
+  onNext?: () => void;
+  onPrevious?: () => void;
+};
+
+export function SectionB({ onNext, onPrevious }: SectionBProps) {
   const [selectedMemberId, setSelectedMemberId] = useState(mockMembers[0].id);
   const selectedMember = mockMembers.find((m) => m.id === selectedMemberId)!;
 
@@ -113,11 +118,12 @@ export function SectionB() {
 
   const onSubmit = (data: SectionBFormValues) => {
     console.log("Section B Complete Household Data:", data);
+    if (onNext) onNext();
   };
 
   return (
     <div className="mx-auto max-w-7xl pb-12">
-      {/* Page Header */}
+      {/* ... header ... */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Section B: Other Demographic Characteristics</h1>
@@ -162,7 +168,7 @@ export function SectionB() {
 
         {/* Right Column: Form Area */}
         <main className="md:col-span-3">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-6">
             {/* Card 1: Member Identification (Locked) */}
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
@@ -419,20 +425,22 @@ export function SectionB() {
             <div className="flex items-center justify-between pt-10 border-t border-gray-100">
               <button
                 type="button"
+                onClick={onPrevious}
                 className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition active:scale-95"
               >
                 <ChevronLeft size={20} strokeWidth={2.5} />
                 Previous Section
               </button>
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmit(onSubmit)}
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition active:scale-95"
               >
                 Next Section
                 <ChevronRight size={20} strokeWidth={2.5} />
               </button>
             </div>
-          </form>
+          </div>
         </main>
       </div>
     </div>

@@ -44,44 +44,42 @@ export const sectionDefs: SectionDef[] = [
   { id: "G", title: "Food Security", description: "Household food access situation.", questions: [] },
   {
     id: "H",
-    title: "ICT Access",
-    description: "Access to digital devices and internet.",
-    questions: [
-      { id: "h01", label: "Internet Access at Home", required: true, placeholder: "Yes / No" },
-      { id: "h02", label: "Primary Device Used", required: false, placeholder: "Smartphone" },
-    ],
+    title: "Public Transportation",
+    description: "Household access to public transportation within walking distance.",
+    questions: [],
   },
   { id: "I", title: "Finance", description: "Financial account ownership and access.", questions: [] },
   {
     id: "J",
-    title: "Social Protection",
-    description: "Program enrollment and benefits.",
-    questions: [
-      { id: "j01", label: "4Ps Beneficiary", required: true, placeholder: "Yes / No" },
-      { id: "j02", label: "Other Program Membership", required: false, placeholder: "Program name" },
-    ],
+    title: "Negative Shocks & Preparedness",
+    description: "Disasters experienced and household emergency preparedness.",
+    questions: [],
   },
   {
     id: "K",
-    title: "Environment",
-    description: "Household climate and hazard indicators.",
-    questions: [
-      { id: "k01", label: "Flood-Prone Area", required: true, placeholder: "Yes / No" },
-      { id: "k02", label: "Evacuation Plan Available", required: false, placeholder: "Yes / No" },
-    ],
+    title: "Internet Access",
+    description: "Household internet access and connection types at home.",
+    questions: [],
   },
-  { id: "L", title: "Safety", description: "Perceived safety and security concerns.", questions: [] },
+  {
+    id: "L",
+    title: "Public Safety",
+    description: "Perceived neighborhood safety when walking at night.",
+    questions: [],
+  },
   {
     id: "M",
-    title: "Transport",
-    description: "Transportation access and travel burden.",
-    questions: [
-      { id: "m01", label: "Primary Transport Mode", required: true, placeholder: "Tricycle" },
-      { id: "m02", label: "Travel Time to Town Center", required: false, placeholder: "30 minutes" },
-    ],
+    title: "Social Protection",
+    description: "Social protection and assistance program participation.",
+    questions: [],
   },
   { id: "N", title: "WASH", description: "Water source and waste practices.", questions: [] },
-  { id: "O", title: "Housing Materials", description: "Dwelling roof and wall profile.", questions: [] },
+  {
+    id: "O",
+    title: "Housing Characteristics",
+    description: "Building type, tenure, utilities, and household conveniences.",
+    questions: [],
+  },
 ];
 
 export const relationshipOptions = [

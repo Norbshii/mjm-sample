@@ -7,13 +7,13 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   sectionDefs,
   HouseholdMember,
   functionalRows,
-  gRows,
+  relationshipOptions,
 } from "@/lib/census-constants";
 import { PROTOTYPE_FAST_NAVIGATION } from "@/lib/prototype-flags";
 
@@ -21,11 +21,16 @@ import { PROTOTYPE_FAST_NAVIGATION } from "@/lib/prototype-flags";
 const SectionA = dynamic(() => import("./sections/SectionA").then(mod => mod.SectionA), { ssr: false });
 const SectionB = dynamic(() => import("./sections/SectionB").then(mod => mod.SectionB), { ssr: false });
 const SectionC = dynamic(() => import("./sections/SectionC").then(mod => mod.SectionC), { ssr: false });
+const SectionD = dynamic(() => import("./sections/SectionD").then(mod => mod.SectionD), { ssr: false });
 const SectionE = dynamic(() => import("./sections/SectionE").then(mod => mod.SectionE), { ssr: false });
 const SectionF = dynamic(() => import("./sections/SectionF").then(mod => mod.SectionF), { ssr: false });
-const SectionG = dynamic(() => import("./sections/SectionG").then(mod => mod.SectionG), { ssr: false });
-const SectionI = dynamic(() => import("./sections/SectionI").then(mod => mod.SectionI), { ssr: false });
-const SectionL = dynamic(() => import("./sections/SectionL").then(mod => mod.SectionL), { ssr: false });
+const SectionG = dynamic(() => import("./sections/SectionG").then((mod) => mod.SectionG), { ssr: false });
+const SectionH = dynamic(() => import("./sections/SectionH").then((mod) => mod.SectionH), { ssr: false });
+const SectionI = dynamic(() => import("./sections/SectionI").then((mod) => mod.SectionI), { ssr: false });
+const SectionJ = dynamic(() => import("./sections/SectionJ").then((mod) => mod.SectionJ), { ssr: false });
+const SectionK = dynamic(() => import("./sections/SectionK").then((mod) => mod.SectionK), { ssr: false });
+const SectionL = dynamic(() => import("./sections/SectionL").then((mod) => mod.SectionL), { ssr: false });
+const SectionM = dynamic(() => import("./sections/SectionM").then((mod) => mod.SectionM), { ssr: false });
 const SectionN = dynamic(() => import("./sections/SectionN").then(mod => mod.SectionN), { ssr: false });
 const SectionO = dynamic(() => import("./sections/SectionO").then(mod => mod.SectionO), { ssr: false });
 const GenericSection = dynamic(() => import("./sections/GenericSection").then(mod => mod.GenericSection), { ssr: false });
@@ -84,12 +89,12 @@ function EntriesFormEnginePage() {
   });
   const [sectionC, setSectionC] = useState({ c02: "", c06: "" });
   const [sectionE, setSectionE] = useState({ e07: "", e08: "" });
-  const [sectionF, setSectionF] = useState({ public: [] as string[], private: [] as string[] });
-  const [sectionG, setSectionG] = useState<Record<string, string>>({});
-  const [sectionI, setSectionI] = useState<string[]>([]);
-  const [sectionL, setSectionL] = useState({ l01: "" });
-  const [sectionN, setSectionN] = useState({ n01: "", n12: [] as string[] });
-  const [sectionO, setSectionO] = useState({ o03: "", o04: "" });
+  const [sectionF] = useState({ public: [] as string[], private: [] as string[] });
+  const [sectionG] = useState<Record<string, string>>({});
+  const [sectionI] = useState<string[]>([]);
+  const [sectionL] = useState({ l01: "" });
+  const [sectionN] = useState({ n01: "", n12: [] as string[] });
+  const [sectionO] = useState({ o03: "", o04: "" });
 
   const activeSectionIndex = sectionDefs.findIndex((section) => section.id === activeSection);
   const activeSectionDef = sectionDefs[activeSectionIndex];
@@ -275,52 +280,32 @@ function EntriesFormEnginePage() {
       return Object.keys(nextErrors).length === 0;
     }
     if (section.id === "E") {
-      const nextErrors: Record<string, string> = {};
-      if (!sectionE.e07) nextErrors.e07 = "Nature of Employment (E07) is required.";
-      if (!sectionE.e08) nextErrors.e08 = "Class of Worker (E08) is required.";
-      setSectionErrors(nextErrors);
-      return Object.keys(nextErrors).length === 0;
+      return true;
     }
     if (section.id === "F") {
-      const nextErrors: Record<string, string> = {};
-      if (sectionF.public.length === 0) nextErrors.fPublic = "Select at least one public facility.";
-      if (sectionF.private.length === 0) nextErrors.fPrivate = "Select at least one private facility.";
-      setSectionErrors(nextErrors);
-      return Object.keys(nextErrors).length === 0;
+      return true;
     }
-    if (section.id === "G") {
-      const nextErrors: Record<string, string> = {};
-      gRows.forEach((row) => {
-        if (!sectionG[row.id]) nextErrors[row.id] = "Required.";
-      });
-      setSectionErrors(nextErrors);
-      return Object.keys(nextErrors).length === 0;
-    }
-    if (section.id === "I") {
-      const nextErrors: Record<string, string> = {};
-      if (sectionI.length === 0) nextErrors.i01 = "Select at least one financial account option.";
-      setSectionErrors(nextErrors);
-      return Object.keys(nextErrors).length === 0;
+    if (
+      section.id === "G" ||
+      section.id === "H" ||
+      section.id === "I" ||
+      section.id === "J" ||
+      section.id === "K" ||
+      section.id === "L" ||
+      section.id === "M" ||
+      section.id === "N" ||
+      section.id === "O"
+    ) {
+      return true;
     }
     if (section.id === "L") {
-      const nextErrors: Record<string, string> = {};
-      if (!sectionL.l01) nextErrors.l01 = "Safety Walking at Night (L01) is required.";
-      setSectionErrors(nextErrors);
-      return Object.keys(nextErrors).length === 0;
+      return true;
     }
     if (section.id === "N") {
-      const nextErrors: Record<string, string> = {};
-      if (!sectionN.n01) nextErrors.n01 = "Water Source (N01) is required.";
-      if (sectionN.n12.length === 0) nextErrors.n12 = "Waste Disposal (N12) requires at least one.";
-      setSectionErrors(nextErrors);
-      return Object.keys(nextErrors).length === 0;
+      return true;
     }
     if (section.id === "O") {
-      const nextErrors: Record<string, string> = {};
-      if (!sectionO.o03) nextErrors.o03 = "Roof Material (O03) is required.";
-      if (!sectionO.o04) nextErrors.o04 = "Wall Material (O04) is required.";
-      setSectionErrors(nextErrors);
-      return Object.keys(nextErrors).length === 0;
+      return true;
     }
 
     const values = formValues[section.id] ?? {};
@@ -370,23 +355,69 @@ function EntriesFormEnginePage() {
           />
         );
       case "B":
-        return <SectionB sectionB={sectionB} setSectionB={setSectionB} sectionErrors={sectionErrors} />;
+        return <SectionB onNext={onNext} onPrevious={onPrevious} />;
       case "C":
-        return <SectionC sectionC={sectionC} setSectionC={setSectionC} sectionErrors={sectionErrors} />;
+        return (
+          <SectionC
+            members={sectionA.members.map((householdMember, index) => ({
+              id: String(householdMember.id),
+              firstName: householdMember.a01FirstName || `Member ${index + 1}`,
+              lastName: householdMember.a01LastName,
+              age: Number(householdMember.a05Age || "0"),
+              sex: householdMember.a03Sex === "1" ? "Male" : "Female",
+              relationship:
+                index === 0
+                  ? "01 Head"
+                  : relationshipOptions.find(
+                      (option) => option.value === householdMember.a02Relationship,
+                    )?.label ?? "Member",
+            }))}
+            onNext={onNext}
+            onPrevious={onPrevious}
+          />
+        );
+      case "D":
+        return (
+          <SectionD
+            members={sectionA.members.map((householdMember, index) => ({
+              id: String(householdMember.id),
+              firstName: householdMember.a01FirstName || `Member ${index + 1}`,
+              lastName: householdMember.a01LastName,
+              age: Number(householdMember.a05Age || "0"),
+              sex: householdMember.a03Sex === "1" ? "Male" : "Female",
+              relationship:
+                index === 0
+                  ? "01 Head"
+                  : relationshipOptions.find(
+                      (option) => option.value === householdMember.a02Relationship,
+                    )?.label ?? "Member",
+            }))}
+            onNext={onNext}
+            onPrevious={onPrevious}
+          />
+        );
       case "E":
-        return <SectionE sectionE={sectionE} setSectionE={setSectionE} sectionErrors={sectionErrors} />;
+        return <SectionE onNext={onNext} onPrevious={onPrevious} />;
       case "F":
-        return <SectionF sectionF={sectionF} setSectionF={setSectionF} sectionErrors={sectionErrors} />;
+        return <SectionF onNext={onNext} onPrevious={onPrevious} />;
       case "G":
-        return <SectionG sectionG={sectionG} setSectionG={setSectionG} sectionErrors={sectionErrors} />;
+        return <SectionG onNext={onNext} onPrevious={onPrevious} />;
+      case "H":
+        return <SectionH onNext={onNext} onPrevious={onPrevious} />;
       case "I":
-        return <SectionI sectionI={sectionI} setSectionI={setSectionI} sectionErrors={sectionErrors} />;
+        return <SectionI onNext={onNext} onPrevious={onPrevious} />;
+      case "J":
+        return <SectionJ onNext={onNext} onPrevious={onPrevious} />;
+      case "K":
+        return <SectionK onNext={onNext} onPrevious={onPrevious} />;
       case "L":
-        return <SectionL sectionL={sectionL} setSectionL={setSectionL} sectionErrors={sectionErrors} />;
+        return <SectionL onNext={onNext} onPrevious={onPrevious} />;
+      case "M":
+        return <SectionM onNext={onNext} onPrevious={onPrevious} />;
       case "N":
-        return <SectionN sectionN={sectionN} setSectionN={setSectionN} sectionErrors={sectionErrors} />;
+        return <SectionN onNext={onNext} onPrevious={onPrevious} />;
       case "O":
-        return <SectionO sectionO={sectionO} setSectionO={setSectionO} sectionErrors={sectionErrors} />;
+        return <SectionO onNext={onNext} onPrevious={onPrevious} />;
       default:
         return (
           <GenericSection
@@ -476,36 +507,33 @@ function EntriesFormEnginePage() {
           <p className="mt-1 text-sm text-[#475467]">{activeSectionDef.description}</p>
         </div>
 
-        <form
-          className="mt-6 space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onNext();
-          }}
-        >
+        <div className="mt-6 space-y-4">
           <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-gray-50" />}>
             {renderActiveSection()}
           </Suspense>
 
-          <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
-            <button
-              type="button"
-              onClick={onPrevious}
-              disabled={activeSectionIndex === 0}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <ChevronLeft size={16} />
-              Previous
-            </button>
-            <button
-              type="submit"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#175CD3] px-6 text-sm font-semibold text-white shadow-lg shadow-[#175CD3]/20 transition hover:bg-[#1849A9]"
-            >
-              {activeSectionIndex === sectionDefs.length - 1 ? "Complete Record" : "Next Section"}
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </form>
+          {!["B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O"].includes(activeSection) && (
+            <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
+              <button
+                type="button"
+                onClick={onPrevious}
+                disabled={activeSectionIndex === 0}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={onNext}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#175CD3] px-6 text-sm font-semibold text-white shadow-lg shadow-[#175CD3]/20 transition hover:bg-[#1849A9]"
+              >
+                {activeSectionIndex === sectionDefs.length - 1 ? "Complete Record" : "Next Section"}
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

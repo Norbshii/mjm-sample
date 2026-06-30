@@ -7,8 +7,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "dev:turbo": "next dev --turbopack",
-    "build": "next build",
+    "dev:webpack": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint . --cache --cache-location .next/cache/eslint/"
   },

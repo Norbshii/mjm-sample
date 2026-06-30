@@ -76,6 +76,7 @@ const ageSexData = [
 ];
 
 const PIE_COLORS = ["#2E90FA", "#84CAFF", "#444CE7", "#94A3B8"];
+const CHART_HEIGHT = 320;
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -278,7 +279,7 @@ export default function DashboardPage() {
       case "pending_sync":
       case "needs_correction":
         return (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={CHART_HEIGHT} minWidth={0}>
             <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2F4F7" />
               <XAxis
@@ -316,7 +317,7 @@ export default function DashboardPage() {
         );
       case "age_sex":
         return (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={CHART_HEIGHT} minWidth={0}>
             <BarChart
               data={ageSexData}
               margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
@@ -362,7 +363,7 @@ export default function DashboardPage() {
         );
       case "highest_grade":
         return (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={CHART_HEIGHT} minWidth={0}>
             <BarChart
               layout="vertical"
               data={educationData}
@@ -390,8 +391,8 @@ export default function DashboardPage() {
         );
       case "marital_status":
         return (
-          <div className="relative h-full w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="relative flex h-full w-full min-h-[320px] items-center justify-center">
+            <ResponsiveContainer width="100%" height={CHART_HEIGHT} minWidth={0}>
               <PieChart>
                 <Pie
                   data={maritalData}
@@ -579,7 +580,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Row 3: Dynamic Recharts Chart */}
-        <div className="h-80 w-full pt-4">
+        <div className="h-80 min-h-[320px] w-full min-w-0 pt-4">
           {renderActiveChart()}
         </div>
       </section>

@@ -1,23 +1,33 @@
 "use client";
 
-import React from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronLeft, ChevronRight, Globe, MapPin, User } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
-import { ChevronLeft, ChevronRight, HelpCircle, Info, MapPin, Globe, Calendar } from "lucide-react";
+import {
+  FormRadioGroup,
+  FormSearchableSelect,
+  FormSelect,
+} from "@/components/untitledui/form-engine-fields";
 
-// Mock member prop
-interface SectionCProps {
-  member: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    age: number;
-    sex: string;
-  };
-}
+export type MigrationMember = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  age: number;
+  sex: string;
+  relationship?: string;
+};
 
-// Data Dictionary Options
+type SectionCProps = {
+  members?: MigrationMember[];
+  member?: MigrationMember;
+  onNext?: () => void;
+  onPrevious?: () => void;
+};
+
 const c01Options = [
   { label: "1 Yes, Filipino citizen", value: "1" },
   { label: "2 Yes, Filipino with dual citizenship", value: "2" },
@@ -52,11 +62,88 @@ const c06Options = [
   { label: "8 Don't know", value: "8" },
 ];
 
-// Zod Schema
-const sectionCSchema = z.object({
-  c01: z.string().min(1, "Required"),
+const monthOptions = [
+  { label: "January", value: "01" },
+  { label: "February", value: "02" },
+  { label: "March", value: "03" },
+  { label: "April", value: "04" },
+  { label: "May", value: "05" },
+  { label: "June", value: "06" },
+  { label: "July", value: "07" },
+  { label: "August", value: "08" },
+  { label: "September", value: "09" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+];
+
+// TODO: Hook up PSGC API
+const provinceOptions = [
+  { label: "Bulacan", value: "PH-BUL" },
+  { label: "Pampanga", value: "PH-PAM" },
+  { label: "Metro Manila", value: "PH-NCR" },
+];
+
+const cityOptionsByProvince: Record<string, { label: string; value: string }[]> = {
+  "PH-BUL": [
+    { label: "Malolos City", value: "PH-BUL-MAL" },
+    { label: "San Jose del Monte City", value: "PH-BUL-SJM" },
+  ],
+  "PH-PAM": [
+    { label: "Angeles City", value: "PH-PAM-ANG" },
+    { label: "San Fernando City", value: "PH-PAM-SF" },
+  ],
+  "PH-NCR": [
+    { label: "Quezon City", value: "PH-NCR-QC" },
+    { label: "Manila City", value: "PH-NCR-MNL" },
+  ],
+};
+
+const barangayOptionsByCity: Record<string, { label: string; value: string }[]> = {
+  "PH-BUL-MAL": [
+    { label: "Barangay San Gabriel", value: "BRGY-SG" },
+    { label: "Barangay San Vicente", value: "BRGY-SV" },
+  ],
+  "PH-BUL-SJM": [
+    { label: "Barangay Muzon", value: "BRGY-MZ" },
+    { label: "Barangay Tungkong Mangga", value: "BRGY-TM" },
+  ],
+  "PH-PAM-ANG": [
+    { label: "Barangay Balibago", value: "BRGY-BAL" },
+    { label: "Barangay Cutcut", value: "BRGY-CUT" },
+  ],
+  "PH-PAM-SF": [
+    { label: "Barangay Dolores", value: "BRGY-DOL" },
+    { label: "Barangay San Agustin", value: "BRGY-SA" },
+  ],
+  "PH-NCR-QC": [
+    { label: "Barangay Commonwealth", value: "BRGY-CW" },
+    { label: "Barangay Batasan Hills", value: "BRGY-BH" },
+  ],
+  "PH-NCR-MNL": [
+    { label: "Barangay Ermita", value: "BRGY-ERM" },
+    { label: "Barangay Sampaloc", value: "BRGY-SAM" },
+  ],
+};
+
+const countryGroups = [
+  {
+    label: "Common Destinations",
+    options: [
+      { label: "United States", value: "USA" },
+      { label: "Canada", value: "CAN" },
+      { label: "Japan", value: "JPN" },
+      { label: "Singapore", value: "SGP" },
+      { label: "United Arab Emirates", value: "ARE" },
+      { label: "Saudi Arabia", value: "SAU" },
+    ],
+  },
+];
+
+const memberSectionCBaseSchema = z.object({
+  c01: z.string().min(1, "C01 is required."),
   c02: z.string().optional(),
-  c03: z.string().min(1, "Required"),
+  c03: z.string().min(1, "C03 is required."),
   c04_type: z.enum(["within_ph", "outside_ph"]).optional(),
   c04_province: z.string().optional(),
   c04_city: z.string().optional(),
@@ -65,271 +152,534 @@ const sectionCSchema = z.object({
   c05_month: z.string().optional(),
   c05_year: z.string().optional(),
   c06: z.string().optional(),
-}).superRefine((data, ctx) => {
-  // Logic for C03 skip
-  if (data.c03 === "1") {
-    if (!data.c04_type) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required", path: ["c04_type"] });
-    }
-    if (!data.c05_year) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required", path: ["c05_year"] });
-    }
-    if (!data.c06) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Required", path: ["c06"] });
-    }
-  }
 });
 
-type SectionCFormValues = z.infer<typeof sectionCSchema>;
+type MemberSectionCValues = z.infer<typeof memberSectionCBaseSchema>;
 
-export function SectionC({ member }: SectionCProps) {
+type SectionCFormValues = {
+  sectionC: Record<string, MemberSectionCValues>;
+};
+
+function createSectionCSchema(members: MigrationMember[]) {
+  const ageById = Object.fromEntries(members.map((member) => [member.id, member.age]));
+
+  return z
+    .object({
+      sectionC: z.record(z.string(), memberSectionCBaseSchema),
+    })
+    .superRefine((data, ctx) => {
+      for (const [memberId, values] of Object.entries(data.sectionC)) {
+        const age = ageById[memberId] ?? 0;
+        const prefix = ["sectionC", memberId] as const;
+
+        if (age >= 15 && !values.c02?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "C02 is required for members aged 15 and above.",
+            path: [...prefix, "c02"],
+          });
+        }
+
+        if (values.c03 !== "1") {
+          continue;
+        }
+
+        if (!values.c04_type) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Select where the member resided 5 years ago.",
+            path: [...prefix, "c04_type"],
+          });
+        }
+
+        if (values.c04_type === "within_ph") {
+          if (!values.c04_province) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Province is required.",
+              path: [...prefix, "c04_province"],
+            });
+          }
+          if (!values.c04_city) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "City/Municipality is required.",
+              path: [...prefix, "c04_city"],
+            });
+          }
+          if (!values.c04_barangay) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Barangay is required.",
+              path: [...prefix, "c04_barangay"],
+            });
+          }
+        }
+
+        if (values.c04_type === "outside_ph" && !values.c04_country) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Country of residence is required.",
+            path: [...prefix, "c04_country"],
+          });
+        }
+
+        if (!values.c05_month) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Month is required.",
+            path: [...prefix, "c05_month"],
+          });
+        }
+
+        if (!values.c05_year?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Year is required.",
+            path: [...prefix, "c05_year"],
+          });
+        }
+
+        if (!values.c06) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "C06 is required.",
+            path: [...prefix, "c06"],
+          });
+        }
+      }
+    });
+}
+
+const defaultMember: MigrationMember = {
+  id: "mock-01",
+  firstName: "Maria",
+  lastName: "Santos",
+  age: 25,
+  sex: "Female",
+  relationship: "01 Head",
+};
+
+function buildDefaultValues(members: MigrationMember[]): SectionCFormValues {
+  return {
+    sectionC: members.reduce<Record<string, MemberSectionCValues>>((accumulator, member) => {
+      accumulator[member.id] = {
+        c01: "",
+        c02: "",
+        c03: "",
+        c04_type: "within_ph",
+        c04_province: "",
+        c04_city: "",
+        c04_barangay: "",
+        c04_country: "",
+        c05_month: "",
+        c05_year: "",
+        c06: "",
+      };
+      return accumulator;
+    }, {}),
+  };
+}
+
+function SectionCBreadcrumbs() {
+  return (
+    <nav aria-label="Breadcrumb" className="mb-6">
+      <ol className="flex flex-wrap items-center gap-1.5 text-sm">
+        <li>
+          <Link href="/dashboard" className="font-medium text-[#475467] transition hover:text-[#175CD3]">
+            Home
+          </Link>
+        </li>
+        <li aria-hidden="true" className="text-[#98A2B3]">
+          /
+        </li>
+        <li>
+          <Link href="/entries" className="font-medium text-[#475467] transition hover:text-[#175CD3]">
+            Household Profile
+          </Link>
+        </li>
+        <li aria-hidden="true" className="text-[#98A2B3]">
+          /
+        </li>
+        <li>
+          <span className="font-semibold text-[#101828]">Section C: Migration</span>
+        </li>
+      </ol>
+    </nav>
+  );
+}
+
+export function SectionC({ members, member, onNext, onPrevious }: SectionCProps) {
+  const roster = members?.length ? members : member ? [member] : [defaultMember];
+  const [selectedMemberId, setSelectedMemberId] = useState(roster[0]?.id ?? defaultMember.id);
+
+  const schema = useMemo(() => createSectionCSchema(roster), [roster]);
+
   const {
-    register,
+    control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<SectionCFormValues>({
-    resolver: zodResolver(sectionCSchema),
-    defaultValues: {
-      c04_type: "within_ph",
-    },
+    resolver: zodResolver(schema),
+    defaultValues: buildDefaultValues(roster),
   });
 
-  const watchC03 = watch("c03");
-  const watchC04Type = watch("c04_type");
+  const activeMember = roster.find((item) => item.id === selectedMemberId) ?? roster[0];
+  const memberPrefix = `sectionC.${selectedMemberId}` as const;
+  const memberErrors = errors.sectionC?.[selectedMemberId];
 
-  const showC02 = member.age >= 15;
+  const watchC03 = watch(`${memberPrefix}.c03`);
+  const watchC04Type = watch(`${memberPrefix}.c04_type`);
+  const watchProvince = watch(`${memberPrefix}.c04_province`);
+  const watchCity = watch(`${memberPrefix}.c04_city`);
+
+  const showC02 = activeMember.age >= 15;
   const showMigrationDetails = watchC03 === "1";
 
+  const cityOptions = watchProvince ? cityOptionsByProvince[watchProvince] ?? [] : [];
+  const barangayOptions = watchCity ? barangayOptionsByCity[watchCity] ?? [] : [];
+
   const onSubmit = (data: SectionCFormValues) => {
-    console.log("Section C Submission:", data);
+    console.log("Section C submission:", data);
+    onNext?.();
   };
 
+  const displayName =
+    [activeMember.firstName, activeMember.lastName].filter(Boolean).join(" ").trim() || "Member";
+
   return (
-    <div className="mx-auto max-w-5xl pb-12">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Section C: Migration</h1>
-          <p className="text-sm text-gray-500 mt-1">Citizenship and migration history for {member.firstName} {member.lastName}.</p>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full border border-blue-100">
-          <span className="text-xs font-bold text-blue-700 uppercase">Age: {member.age}</span>
-        </div>
-      </div>
+    <div className="pb-4">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4 md:gap-8">
+        <aside className="md:col-span-1">
+          <p className="mb-4 px-2 text-xs font-bold tracking-widest text-gray-400 uppercase">
+            Household Roster
+          </p>
+          <div className="space-y-2">
+            {roster.map((rosterMember) => {
+              const isActive = selectedMemberId === rosterMember.id;
+              const rosterName =
+                [rosterMember.firstName, rosterMember.lastName].filter(Boolean).join(" ").trim() ||
+                "Household Member";
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Card 1: Citizenship Status */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">1</span>
-            Citizenship Status
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">C01. Citizenship</label>
-              <select
-                {...register("c01")}
-                className={`w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm ${errors.c01 ? "border-red-500" : ""}`}
-              >
-                <option value="">Select citizenship...</option>
-                {c01Options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              {errors.c01 && <p className="text-xs text-red-500 mt-1">{errors.c01.message}</p>}
-            </div>
-
-            {showC02 && (
-              <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                <label className="text-sm font-medium text-gray-700">C02. Overseas Filipino Status</label>
-                <select
-                  {...register("c02")}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+              return (
+                <button
+                  key={rosterMember.id}
+                  type="button"
+                  onClick={() => setSelectedMemberId(rosterMember.id)}
+                  className={`flex w-full items-center gap-3 rounded-lg border-l-[3px] p-4 text-left transition-all ${
+                    isActive
+                      ? "border-[#175CD3] bg-[#EFF8FF] shadow-sm"
+                      : "border-transparent bg-white hover:border-gray-200 hover:bg-gray-50"
+                  }`}
                 >
-                  <option value="">Select status...</option>
-                  {c02Options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                      isActive ? "bg-[#175CD3] text-white" : "bg-gray-100 text-gray-400"
+                    }`}
+                  >
+                    <User size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p
+                      className={`truncate text-sm font-semibold ${
+                        isActive ? "text-[#175CD3]" : "text-gray-900"
+                      }`}
+                    >
+                      {rosterName}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                      {rosterMember.relationship ?? "Member"} • Age {rosterMember.age}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </aside>
 
-        {/* Card 2: Migration History */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">2</span>
-            Migration History
-          </h2>
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700">
-                C03. Ever lived in another city/municipality or country for at least 6 months since birth?
-              </label>
-              <div className="flex gap-6">
-                {c03Options.map((opt) => (
-                  <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer group">
-                    <input
-                      type="radio"
-                      value={opt.value}
-                      {...register("c03")}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+        <div className="md:col-span-3">
+          <SectionCBreadcrumbs />
+
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <article className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-6 text-lg font-semibold text-gray-900">Citizenship Status</h2>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <Controller
+                  name={`${memberPrefix}.c01`}
+                  control={control}
+                  render={({ field }) => (
+                    <FormSelect
+                      id={`${selectedMemberId}-c01`}
+                      label="C01. Citizenship"
+                      required
+                      value={field.value ?? ""}
+                      placeholder="Select citizenship..."
+                      options={c01Options}
+                      error={memberErrors?.c01?.message}
+                      onChange={field.onChange}
                     />
-                    <span className="text-sm text-gray-700 group-hover:text-gray-900">{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-              {errors.c03 && <p className="text-xs text-red-500 mt-1">{errors.c03.message}</p>}
-            </div>
+                  )}
+                />
 
-            {showMigrationDetails && (
-              <div className="space-y-8 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
-                {/* C04: Location Data */}
-                <div className="space-y-4">
-                  <label className="text-sm font-medium text-gray-700 block">C04. Previous Residence (Location)</label>
-                  
-                  {/* Location Toggle */}
-                  <div className="flex p-1 bg-gray-100 rounded-lg w-fit">
-                    <button
-                      type="button"
-                      onClick={() => register("c04_type").onChange({ target: { value: "within_ph", name: "c04_type" } })}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        watchC04Type === "within_ph" 
-                          ? "bg-white text-blue-700 shadow-sm" 
-                          : "text-gray-500 hover:text-gray-700"
-                      }`}
-                    >
-                      <MapPin size={16} />
-                      Within Philippines
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => register("c04_type").onChange({ target: { value: "outside_ph", name: "c04_type" } })}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        watchC04Type === "outside_ph" 
-                          ? "bg-white text-blue-700 shadow-sm" 
-                          : "text-gray-500 hover:text-gray-700"
-                      }`}
-                    >
-                      <Globe size={16} />
-                      Outside Philippines
-                    </button>
-                  </div>
-
-                  {/* Cascading Selects or Country */}
-                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
-                    {watchC04Type === "within_ph" ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Province</label>
-                          <select {...register("c04_province")} className="w-full rounded-lg border-gray-200 text-sm">
-                            <option value="">Select Province...</option>
-                            <option value="PH-BUL">Bulacan</option>
-                            <option value="PH-PAM">Pampanga</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">City / Municipality</label>
-                          <select {...register("c04_city")} className="w-full rounded-lg border-gray-200 text-sm">
-                            <option value="">Select City...</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Barangay</label>
-                          <select {...register("c04_barangay")} className="w-full rounded-lg border-gray-200 text-sm">
-                            <option value="">Select Barangay...</option>
-                          </select>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Country</label>
-                        <select {...register("c04_country")} className="w-full rounded-lg border-gray-200 text-sm">
-                          <option value="">Search/Select Country...</option>
-                          <option value="USA">United States</option>
-                          <option value="CAN">Canada</option>
-                          <option value="JPN">Japan</option>
-                        </select>
-                      </div>
+                {showC02 ? (
+                  <Controller
+                    name={`${memberPrefix}.c02`}
+                    control={control}
+                    render={({ field }) => (
+                      <FormSelect
+                        id={`${selectedMemberId}-c02`}
+                        label="C02. Overseas Filipino Status"
+                        required
+                        value={field.value ?? ""}
+                        placeholder="Select status..."
+                        options={c02Options}
+                        error={memberErrors?.c02?.message}
+                        onChange={field.onChange}
+                      />
                     )}
-                  </div>
-                </div>
+                  />
+                ) : null}
+              </div>
+            </article>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* C05: Month/Year */}
-                  <div className="space-y-4">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Calendar size={18} className="text-gray-400" />
-                      C05. When did {member.firstName} move?
-                    </label>
-                    <div className="flex gap-3">
-                      <div className="flex-1">
-                        <select {...register("c05_month")} className="w-full rounded-lg border-gray-200 text-sm">
-                          <option value="">Month</option>
-                          {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, i) => (
-                            <option key={m} value={String(i + 1).padStart(2, "0")}>{m}</option>
-                          ))}
-                        </select>
+            <article className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-6 text-lg font-semibold text-gray-900">Migration History</h2>
+              <div className="space-y-8">
+                <Controller
+                  name={`${memberPrefix}.c03`}
+                  control={control}
+                  render={({ field }) => (
+                    <FormRadioGroup
+                      id={`${selectedMemberId}-c03`}
+                      label={`C03. Was residence 5 years ago the same as current for ${displayName}?`}
+                      required
+                      orientation="horizontal"
+                      value={field.value ?? ""}
+                      options={c03Options}
+                      error={memberErrors?.c03?.message}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+
+                {showMigrationDetails ? (
+                  <div className="space-y-8 border-t border-gray-100 pt-6">
+                    <div className="space-y-4">
+                      <p className="text-sm font-medium text-[#344054]">
+                        C04. Where did {displayName} reside 5 years ago?
+                      </p>
+
+                      <div className="flex w-fit rounded-lg bg-gray-100 p-1">
+                        <button
+                          type="button"
+                          onClick={() => setValue(`${memberPrefix}.c04_type`, "within_ph")}
+                          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                            watchC04Type === "within_ph"
+                              ? "bg-white text-[#175CD3] shadow-sm"
+                              : "text-gray-500 hover:text-gray-700"
+                          }`}
+                        >
+                          <MapPin size={16} />
+                          Within Philippines
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setValue(`${memberPrefix}.c04_type`, "outside_ph")}
+                          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                            watchC04Type === "outside_ph"
+                              ? "bg-white text-[#175CD3] shadow-sm"
+                              : "text-gray-500 hover:text-gray-700"
+                          }`}
+                        >
+                          <Globe size={16} />
+                          Outside Philippines
+                        </button>
                       </div>
-                      <div className="flex-1">
-                        <input
-                          type="number"
-                          {...register("c05_year")}
-                          placeholder="Year (YYYY)"
-                          min="1900"
-                          max={new Date().getFullYear()}
-                          className={`w-full rounded-lg border-gray-200 text-sm ${errors.c05_year ? "border-red-500" : ""}`}
-                        />
+
+                      {memberErrors?.c04_type?.message ? (
+                        <p className="text-xs text-[#D92D20]">{memberErrors.c04_type.message}</p>
+                      ) : null}
+
+                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
+                        {watchC04Type === "outside_ph" ? (
+                          <Controller
+                            name={`${memberPrefix}.c04_country`}
+                            control={control}
+                            render={({ field }) => (
+                              <FormSearchableSelect
+                                id={`${selectedMemberId}-c04-country`}
+                                label="Country of Residence"
+                                required
+                                value={field.value ?? ""}
+                                placeholder="Search country..."
+                                groups={countryGroups}
+                                error={memberErrors?.c04_country?.message}
+                                onChange={field.onChange}
+                              />
+                            )}
+                          />
+                        ) : (
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <Controller
+                              name={`${memberPrefix}.c04_province`}
+                              control={control}
+                              render={({ field }) => (
+                                <FormSelect
+                                  id={`${selectedMemberId}-c04-province`}
+                                  label="Province"
+                                  required
+                                  value={field.value ?? ""}
+                                  placeholder="Select province..."
+                                  options={provinceOptions}
+                                  error={memberErrors?.c04_province?.message}
+                                  onChange={(value) => {
+                                    field.onChange(value);
+                                    setValue(`${memberPrefix}.c04_city`, "");
+                                    setValue(`${memberPrefix}.c04_barangay`, "");
+                                  }}
+                                />
+                              )}
+                            />
+                            <Controller
+                              name={`${memberPrefix}.c04_city`}
+                              control={control}
+                              render={({ field }) => (
+                                <FormSelect
+                                  id={`${selectedMemberId}-c04-city`}
+                                  label="City / Municipality"
+                                  required
+                                  value={field.value ?? ""}
+                                  placeholder="Select city..."
+                                  options={cityOptions}
+                                  disabled={!watchProvince}
+                                  error={memberErrors?.c04_city?.message}
+                                  onChange={(value) => {
+                                    field.onChange(value);
+                                    setValue(`${memberPrefix}.c04_barangay`, "");
+                                  }}
+                                />
+                              )}
+                            />
+                            <Controller
+                              name={`${memberPrefix}.c04_barangay`}
+                              control={control}
+                              render={({ field }) => (
+                                <FormSelect
+                                  id={`${selectedMemberId}-c04-barangay`}
+                                  label="Barangay"
+                                  required
+                                  value={field.value ?? ""}
+                                  placeholder="Select barangay..."
+                                  options={barangayOptions}
+                                  disabled={!watchCity}
+                                  error={memberErrors?.c04_barangay?.message}
+                                  onChange={field.onChange}
+                                />
+                              )}
+                            />
+                          </div>
+                        )}
                       </div>
+                      {/* TODO: Hook up PSGC API */}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#344054]">
+                          C05. When did {displayName} move to the current city/municipality?
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Controller
+                            name={`${memberPrefix}.c05_month`}
+                            control={control}
+                            render={({ field }) => (
+                              <FormSelect
+                                id={`${selectedMemberId}-c05-month`}
+                                label="Month"
+                                required
+                                value={field.value ?? ""}
+                                placeholder="Month"
+                                options={monthOptions}
+                                error={memberErrors?.c05_month?.message}
+                                onChange={field.onChange}
+                              />
+                            )}
+                          />
+                          <Controller
+                            name={`${memberPrefix}.c05_year`}
+                            control={control}
+                            render={({ field }) => (
+                              <div className="space-y-2">
+                                <label htmlFor={`${selectedMemberId}-c05-year`} className="text-sm font-medium text-[#344054]">
+                                  Year *
+                                </label>
+                                <input
+                                  id={`${selectedMemberId}-c05-year`}
+                                  type="number"
+                                  min={1900}
+                                  max={new Date().getFullYear()}
+                                  placeholder="YYYY"
+                                  value={field.value ?? ""}
+                                  onChange={field.onChange}
+                                  className={`h-11 w-full rounded-xl border bg-white px-3 text-sm text-[#101828] outline-none transition focus:ring-4 ${
+                                    memberErrors?.c05_year
+                                      ? "border-[#FDA29B] focus:border-[#D92D20] focus:ring-[#FEE4E2]"
+                                      : "border-gray-300 focus:border-[#1570EF] focus:ring-[#D1E9FF]"
+                                  }`}
+                                />
+                                {memberErrors?.c05_year?.message ? (
+                                  <p className="text-xs text-[#D92D20]">{memberErrors.c05_year.message}</p>
+                                ) : null}
+                              </div>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      <Controller
+                        name={`${memberPrefix}.c06`}
+                        control={control}
+                        render={({ field }) => (
+                          <FormSelect
+                            id={`${selectedMemberId}-c06`}
+                            label="C06. Was relocation due to disaster/displacement?"
+                            required
+                            value={field.value ?? ""}
+                            placeholder="Select response..."
+                            options={c06Options}
+                            error={memberErrors?.c06?.message}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
                     </div>
                   </div>
-
-                  {/* C06: Reasons */}
-                  <div className="space-y-4">
-                    <label className="text-sm font-medium text-gray-700">C06. Reason for moving to current residence</label>
-                    <select
-                      {...register("c06")}
-                      className={`w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm ${errors.c06 ? "border-red-500" : ""}`}
-                    >
-                      <option value="">Select reason...</option>
-                      {c06Options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
-                  <Info size={20} className="text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                    C03-C06 tracks lifetime migration. If multiple moves occurred, record the most recent one before moving to the current city/municipality.
-                  </p>
-                </div>
+                ) : null}
               </div>
-            )}
-          </div>
-        </div>
+            </article>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-8">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 transition active:scale-95"
-          >
-            <ChevronLeft size={20} />
-            Back
-          </button>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition active:scale-95"
-          >
-            Save Migration Data
-            <ChevronRight size={20} />
-          </button>
+            <footer className="flex items-center justify-between border-t border-gray-200 pt-6">
+              <button
+                type="button"
+                onClick={onPrevious}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+              >
+                <ChevronLeft size={16} />
+                Back
+              </button>
+              <button
+                type="submit"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#175CD3] px-6 text-sm font-semibold text-white shadow-lg shadow-[#175CD3]/20 transition hover:bg-[#1849A9]"
+              >
+                Next Section
+                <ChevronRight size={16} />
+              </button>
+            </footer>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
